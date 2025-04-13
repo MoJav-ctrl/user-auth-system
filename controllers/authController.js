@@ -1,8 +1,8 @@
 const userModel = require('../models/userModel');
 const { generateToken } = require('../config/jwt');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const sendEmail = require('../utils/email'); // You'll need to implement this
+const { v4: uuidv4 } = require('uuid');
+const sendEmail = require('../utils/email');
 
 // User signup
 const signup = async (req, res) => {
@@ -91,48 +91,46 @@ const login = async (req, res) => {
 const requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
-
-        // Find user by email
+        
+        // Security: Artificial delay setup
         const user = await userModel.findOne({ email });
         if (!user) {
-            // Don't reveal if user doesn't exist for security
-            return res.status(200).json({ 
-                success: true, 
-                message: 'If an account exists with this email, a reset link has been sent' 
+            await new Promise(resolve => setTimeout(resolve, 500)); // Anti-timing attack
+            return res.status(202).json({
+                success: true,
+                message: 'If this email is registered, you will receive a password reset link shortly'
             });
         }
 
-        // Generate reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
-
-        // Save to user document
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = resetTokenExpiry;
+        // Generate and save token
+        const resetToken = uuidv4();
+        user.resetPasswordToken = await bcrypt.hash(resetToken, 10); // Hashed token
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
-
-        // Send email with reset link
-        const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+        
+        // Send email
+        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
         await sendEmail({
             to: user.email,
-            subject: 'Password Reset Request',
-            text: `You requested a password reset. Click this link to reset your password: ${resetUrl}\n\nThis link will expire in 1 hour.`
+            subject: 'Password Reset',
+            text: `Reset link: ${resetUrl} (expires in 1 hour)`
         });
 
-        return res.status(200).json({ 
-            success: true, 
-            message: 'If an account exists with this email, a reset link has been sent' 
+        return res.status(202).json({
+            success: true,
+            message: 'If this email is registered, you will receive a password reset link shortly'
         });
+        
     } catch (error) {
-        console.error('Password reset request error:', error);
+        console.error('Reset error:', error);
         return res.status(500).json({ 
             success: false, 
-            message: 'Server error during password reset request' 
+            message: 'Server error during password reset' 
         });
     }
 };
 
-// Confirm password reset
+// Confirm password reset (no changes needed here)
 const confirmPasswordReset = async (req, res) => {
     try {
         const { token } = req.params;
@@ -183,3 +181,5 @@ module.exports = {
     requestPasswordReset,
     confirmPasswordReset
 };
+
+
