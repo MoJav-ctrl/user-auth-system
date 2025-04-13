@@ -36,6 +36,12 @@ UserSchema.pre('save', async function(next) {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt); // hash the password
   }
+
+  // Hash reset token if modified
+  if (this.isModified('resetPasswordToken') && this.resetPasswordToken) {
+    const salt = await bcrypt.genSalt(10);
+    this.resetPasswordToken = await bcrypt.hash(this.resetPasswordToken, salt);
+  }
   next();
 });
 
