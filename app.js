@@ -1,27 +1,51 @@
-const express =require('express');
-const dotenv = require('dotenv');
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
 const passport = require('passport');
-const connectDB = require('./config/db'); // Import the connectDB function from the db.js file
-require('./config/passport'); // Import the passport configuration function from the passport.js file
+const connectDB = require('./config/db');
+const { generalLimiter } = require('./middleware/rateLimiter');
+const { errorHandler } = require('./utils/errorHandler');
+const logger = require('./utils/logger');
 
 // Load environment variables from .env file
-dotenv.config();
+require('dotenv').config();
 
 const app = express();
 
-// Middleware to parse JSON requests
-app.use(express.json());
+// Security Middleware
+app.use(helmet());
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS.split(',') || '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}));
 
-// Initialize passport
+// General rate limiting middleware
+app.use(generalLimiter);
+
+// Application-level middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Authentication
 app.use(passport.initialize());
 
 // Connect to the database
 connectDB();
 
-//Root route for testing
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+
+// Error handling middleware
+app.use(errorHandler);
+
+// Test route
 app.get('/', (req, res) => {
-    res.send('Welcome to this User Authentication System');
+    res.status(200).json({ message: 'API is working!' });
 });
 
-//Export the app for use in other files
+
 module.exports = app;
+
