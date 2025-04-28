@@ -23,9 +23,14 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
-}, {
-     timestamps: true // adds createdAt and updatedAt timestamps
-});
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verifyToken: String,
+  verifyTokenExpires: Date
+},{timestamps: true}, // adds createdAt and updatedAt timestamps
+);
 
 // Pre-save hook to hash the password before saving the user
 UserSchema.pre('save', async function(next) {

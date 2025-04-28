@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { errorHandler } = require('./utils/errorHandler');
 const logger = require('./utils/logger');
+const ExpressBrute = require('express-brute');
 
 // Load environment variables from .env file
 require('dotenv').config();
@@ -37,6 +38,11 @@ connectDB();
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+const bruteforce = new ExpressBrute(store, {
+    freeRetries: 5,
+    minWait: 5*60*1000 // 5 minutes
+  });
+  app.use('/api/auth/login', bruteforce.prevent, require('./routes/authRoutes'));
 
 // Error handling middleware
 app.use(errorHandler);
@@ -48,4 +54,3 @@ app.get('/', (req, res) => {
 
 
 module.exports = app;
-

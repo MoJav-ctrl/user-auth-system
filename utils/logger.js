@@ -26,6 +26,8 @@ const logger = winston.createLogger({
     ]
 });
 
+logger.info('User registered', { email: user.email, ip: req.ip });
+
 // Handle uncaught promise rejections
 process.on('unhandledRejection', (reason) => {
     throw reason;
