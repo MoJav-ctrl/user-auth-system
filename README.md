@@ -6,6 +6,7 @@ A User Authentication System
 ENDPOINT | TEST CASE | EXPECTED RESULT
 ---------|-------------|-------------------
 POST /api/auth/signup | Valid credentials |	201 Created + JWT
+                        Duplicate email   |	400 Bad Request
                     	Duplicate email   |	400 Bad Request
                         Invalid email format |	400 + validation error
 POST /api/auth/login |	Correct credentials	 |	200 OK + JWT
