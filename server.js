@@ -20,4 +20,9 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 });
 
+const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URI', 'EMAIL_USERNAME'];
+requiredEnvVars.forEach(varName => {
+  if (!process.env[varName]) throw new Error(`Missing ${varName} in environment`);
+});
+
 module.exports = server;
