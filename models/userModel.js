@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin', 'moderator'],
+    default: 'user'
+  },
   resetPasswordToken: String,
   resetPasswordExpires: Date
 }, {
@@ -54,5 +59,5 @@ userSchema.methods.generatePasswordReset = function() {
   this.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('userModel', userSchema);
 
